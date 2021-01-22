@@ -5,6 +5,8 @@ typedef struct Combo {
   uint32_t last_modify_time;
 } Combo;
 
+// #define COMBO_DEBUG
+
 #ifdef COMBO_DEBUG
   #define TRANSITION_DEBUG(a) uprintf("transition '" #a "' now it is #%d: {", combo - &combo_stack[0]); \
     for (int i = 0; i < combo->size; ++i) { \
@@ -97,6 +99,14 @@ uint16_t combo_get_keycode(ComboPos pos) {
   return pgm_read_word(&(combos[pos.repr].keycode));
 }
 
+uint16_t combo_get_undo(ComboPos elem_index) {
+  return pgm_read_word(&(combos[elem_index.repr].undo_keycode));
+}
+
+bool combo_is_immediate(ComboPos elem_index) {
+  return combo_get_undo(elem_index) != 0;
+}
+
 void combo_press(ComboPos pos, bool down) {
   #ifdef COMBO_DEBUG
   uprintf("combo press pos: %d %s\n", pos, down ? "down" : "up");
@@ -104,6 +114,16 @@ void combo_press(ComboPos pos, bool down) {
 
   combo_enabled = false;
   press_arbitrary_keycode(combo_get_keycode(pos), down);
+  combo_enabled = true;
+}
+
+void combo_press_undo(ComboPos pos) {
+  #ifdef COMBO_DEBUG
+  uprintf("combo press undo up: %d\n", pos);
+  #endif
+
+  combo_enabled = false;
+  press_arbitrary_keycode(combo_get_undo(pos), false);
   combo_enabled = true;
 }
 
@@ -186,6 +206,12 @@ bool combo_process_1(Combo *combo, uint16_t key, keyrecord_t *record) {
         combo->size++;
         combo->last_modify_time = timer_read();
         TRANSITION_DEBUG(e);
+
+        ComboPos newpos = combo_get_pos(combo);
+        if (combo_is_immediate(newpos)) {
+          combo_press(newpos, true);
+          combo->state = 4;
+        }
       }
       return false;
     } else {
@@ -271,11 +297,54 @@ bool combo_process_3(Combo *combo, uint16_t key, keyrecord_t *record) {
   return true;
 }
 
+bool combo_process_4(Combo *combo, uint16_t key, keyrecord_t *record) {
+  bool down = record->event.pressed;
+  bool up = !down;
+  ComboKey key_combo = combo_key_to_combo_key(key);
+  ComboPos pos = combo_get_pos(combo);
+
+  if (down && neq_combo_key(key_combo, NONE_COMBO_KEY)) {
+    if (combo_has_prefix(combo, key_combo)) {
+      combo_press_undo(pos);
+      combo->state = 1;
+      TRANSITION_DEBUG(e4);
+      return combo_process_1(combo, key, record);
+    } else {
+      if (neq_combo_pos(pos, NONE_COMBO_POS) && combo_k_enabled) {
+        combo->state = 2;
+        TRANSITION_DEBUG(k4);
+        return true;
+      }
+    }
+  }
+
+  // This is guaranteed to be true
+  if (!neq_combo_pos(pos, NONE_COMBO_POS)) {
+    combo_max_count_error();
+  }
+
+  if (neq_combo_key(key_combo, NONE_COMBO_KEY)) {
+    if (up && combo_has_key(combo, key_combo)) {
+      TRANSITION_DEBUG(g4);
+      return combo_process_1(combo, key, record);
+    }
+  } else {
+    if (down) {
+      TRANSITION_DEBUG(b4);
+      return true;
+    }
+  }
+
+  return true;
+}
+
+
 bool combo_process_local_states(Combo *combo, uint16_t key, keyrecord_t *record) {
   switch (combo->state) {
     case 1: return combo_process_1(combo, key, record);
     case 2: return combo_process_2(combo, key, record);
     case 3: return combo_process_3(combo, key, record);
+    case 4: return combo_process_4(combo, key, record);
   }
   return true;
 }
@@ -307,6 +376,12 @@ bool combo_process_record(uint16_t key, keyrecord_t *record) {
       combo->state = 1;
       combo->last_modify_time = timer_read();
       TRANSITION_DEBUG(a);
+
+      ComboPos pos = combo_get_pos(combo);
+      if (combo_is_immediate(pos)) {
+        combo_press(pos, true);
+        combo->state = 4;
+      }
     }
     return false;
   }
@@ -324,6 +399,14 @@ void combo_user_timer(void) {
           combo_press(pos, true);
           combo->state = 2;
           TRANSITION_DEBUG(d);
+        }
+      }
+    } else if (combo->state == 4) {
+      if (timer_read() - combo->last_modify_time > COMBO_WAIT_TIME) {
+        ComboPos pos = combo_get_pos(combo);
+        if (neq_combo_pos(pos, NONE_COMBO_POS)) {
+          combo->state = 2;
+          TRANSITION_DEBUG(d4);
         }
       }
     }

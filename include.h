@@ -17,7 +17,8 @@ enum combo_keycodes {
 };
 
 // С помощью этого макроса задаётся аккорд
-#define CHORD(KEYCODE, ...) { .to_press = { MAP(COMBO_WITH_SEP, __VA_ARGS__) NONE_COMBO_KEY }, .keycode = KEYCODE }
+#define CHORD(KEYCODE, ...) { .to_press = { MAP(COMBO_WITH_SEP, __VA_ARGS__) NONE_COMBO_KEY }, .keycode = KEYCODE, .undo_keycode = 0 }
+#define IMMEDIATE_CHORD(KEYCODE, UNDO, ...) { .to_press = { MAP(COMBO_WITH_SEP, __VA_ARGS__) NONE_COMBO_KEY }, .keycode = KEYCODE, .undo_keycode = UNDO }
 #define COMBO_WITH_SEP(x) COMBO_KEY(x - CMB_000), 
 
 // Uncomment this line if you want to print debug this extension
@@ -52,6 +53,7 @@ NEWTYPE(ComboPos, combo_pos, uint8_t, 255, NONE_COMBO_POS)
 typedef struct ComboWithKeycode {
   ComboKey to_press[COMBO_MAX_SIZE + 1];
   uint16_t keycode;
+  uint16_t undo_keycode;
 } ComboWithKeycode;
 
 const ComboWithKeycode PROGMEM combos[];
