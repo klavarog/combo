@@ -45,7 +45,7 @@ enum custom_keycodes {
 
 Но иногда случается так, что клавиатура добавляет своих кейкодов, и создаёт новую переменную SAFE_RANGE, которую называет по-другому, нужно за этим следить. Посмотрите, нету ли у вас такой особой переменной. Например, в Moonlander эта переменная называется `ML_SAFE_RANGE`.
 
-После того как вы найдёте имя этой переменной, нужно написать:
+После того как вы найдёте имя этой переменной, в keymap.c прямо перед включением `combo` нужно написать:
 
 ```c
 #define CUSTOM_SAFE_RANGE <ваша переменная>
@@ -54,6 +54,14 @@ enum custom_keycodes {
 Пример для Moonlander:
 ```c
 #define CUSTOM_SAFE_RANGE ML_SAFE_RANGE
+```
+
+Или если вы уже используете `lang_shift`, то это делать не нужно, `lang_shift` yже переопределяет эту переменную. То есть должно получиться что-то вида:
+
+```c
+#define CUSTOM_SAFE_RANGE ML_SAFE_RANGE
+#include "lang_shift/include.h"
+#include "combo/include.h"
 ```
 
 Затем при использовании своих кейкодов необходимо указывать именно `CUSTOM_SAFE_RANGE`, потому что данный модуль использует необходимое количество кейкодов из пользовательских кейкодов и переопределяет эту переменную. Пример:
@@ -126,8 +134,18 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
 В функции `process_record_user` в самом начале, перед всеми проверками, добавляем код обработки аккорда:
 ```c
 bool process_record_user(uint16_t key, keyrecord_t *record) {
-  if (!combo_process_record(key, record))
-    return false;
+  if (!combo_process_record(key, record)) return false;
+
+  // ...
+}
+```
+
+Если вы используете `lang_shift`, то обработка аккордов должна располагаться **перед** обработкой `lang_shift`! То есть:
+
+```c
+bool process_record_user(uint16_t key, keyrecord_t *record) {
+  if (!combo_process_record(key, record)) return false;
+  if (!lang_shift_process_record(keycode, record)(key, record)) return false;
 
   // ...
 }
