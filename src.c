@@ -365,7 +365,7 @@ bool combo_process_record(uint16_t key, keyrecord_t *record) {
       return false;
   }
 
-  if (down && neq_combo_key(key_combo, NONE_COMBO_KEY)) {
+  if (down && combo_k_enabled && neq_combo_key(key_combo, NONE_COMBO_KEY)) {
     if (combo_stack_size == COMBO_STACK_MAX_SIZE) {
       combo_max_count_error();
     } else {
