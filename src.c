@@ -163,7 +163,9 @@ void combo_onenter_end(Combo *combo) {
     }
   }
 
-  combo_stack_size--;
+  if (combo_stack_size > 0) {
+    combo_stack_size--;
+  }
 
   for (uint8_t i = pos; i < combo_stack_size; ++i) {
     combo_stack[i] = combo_stack[i+1];
@@ -178,7 +180,9 @@ void combo_onenter_3(Combo *combo, ComboKey key) {
     }
   }
 
-  combo->size--;
+  if (combo->size > 0) {
+    combo->size--;
+  }
 
   for (uint8_t i = pos; i < combo->size; ++i) {
     combo->array[i] = combo->array[i+1];
@@ -365,7 +369,7 @@ bool combo_process_record(uint16_t key, keyrecord_t *record) {
       return false;
   }
 
-  if (down && neq_combo_key(key_combo, NONE_COMBO_KEY)) {
+  if (down && combo_k_enabled && neq_combo_key(key_combo, NONE_COMBO_KEY)) {
     if (combo_stack_size == COMBO_STACK_MAX_SIZE) {
       combo_max_count_error();
     } else {
