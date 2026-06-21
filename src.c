@@ -329,7 +329,7 @@ bool combo_process_4(Combo *combo, uint16_t key, keyrecord_t *record) {
   if (neq_combo_key(key_combo, NONE_COMBO_KEY)) {
     if (up && combo_has_key(combo, key_combo)) {
       TRANSITION_DEBUG(g4);
-      return combo_process_1(combo, key, record);
+      return combo_process_2(combo, key, record);
     }
   } else {
     if (down) {
