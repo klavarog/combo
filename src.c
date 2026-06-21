@@ -396,7 +396,7 @@ void combo_user_timer(void) {
   for (int i = 0; i < combo_stack_size; ++i) {
     Combo* combo = &combo_stack[i];
     if (combo->state == 1) {
-      if (timer_read() - combo->last_modify_time > COMBO_WAIT_TIME) {
+      if ((uint16_t)(timer_read() - combo->last_modify_time) > COMBO_WAIT_TIME) {
         ComboPos pos = combo_get_pos(combo);
         if (neq_combo_pos(pos, NONE_COMBO_POS)) {
           combo_press(pos, true);
@@ -405,7 +405,7 @@ void combo_user_timer(void) {
         }
       }
     } else if (combo->state == 4) {
-      if (timer_read() - combo->last_modify_time > COMBO_WAIT_TIME) {
+      if ((uint16_t)(timer_read() - combo->last_modify_time) > COMBO_WAIT_TIME) {
         ComboPos pos = combo_get_pos(combo);
         if (neq_combo_pos(pos, NONE_COMBO_POS)) {
           combo->state = 2;
