@@ -333,6 +333,7 @@ bool combo_process_4(Combo *combo, uint16_t key, keyrecord_t *record) {
     }
   } else {
     if (down) {
+      combo->state = 2;
       TRANSITION_DEBUG(b4);
       return true;
     }
