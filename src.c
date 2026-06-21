@@ -212,7 +212,7 @@ bool combo_process_1(Combo *combo, uint16_t key, keyrecord_t *record) {
         TRANSITION_DEBUG(e);
 
         ComboPos newpos = combo_get_pos(combo);
-        if (combo_is_immediate(newpos)) {
+        if (neq_combo_pos(newpos, NONE_COMBO_POS) && combo_is_immediate(newpos)) {
           combo_press(newpos, true);
           combo->state = 4;
         }
@@ -382,7 +382,7 @@ bool combo_process_record(uint16_t key, keyrecord_t *record) {
       TRANSITION_DEBUG(a);
 
       ComboPos pos = combo_get_pos(combo);
-      if (combo_is_immediate(pos)) {
+      if (neq_combo_pos(pos, NONE_COMBO_POS) && combo_is_immediate(pos)) {
         combo_press(pos, true);
         combo->state = 4;
       }
