@@ -221,10 +221,9 @@ bool combo_process_1(Combo *combo, uint16_t key, keyrecord_t *record) {
     } else {
       if (neq_combo_pos(pos, NONE_COMBO_POS) && combo_k_enabled) {
         combo_press(pos, true);
-        process_combo_as_usual(record);
         combo->state = 2;
         TRANSITION_DEBUG(k);
-        return false;
+        return true;
       }
     }
   }
